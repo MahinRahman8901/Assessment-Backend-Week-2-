@@ -26,7 +26,8 @@ def get_clowns() -> Response:
     Creates a new clown in response to a POST request."""
     if request.method == "GET":
         with conn.cursor() as cur:
-            cur.execute("SELECT clown_id FROM clown;")
+            cur.execute(
+                "SELECT clown_id, clown_name, speciality_id FROM clown;")
             return jsonify(cur.fetchall())
     else:
         data = request.json
@@ -51,6 +52,25 @@ def get_clowns() -> Response:
             return jsonify({
                 "message": err.args[0]
             }), 400
+
+
+@app.route("/clown/<int:id>", methods=["GET"])
+def get_clown_by_id(id: int):
+    if request.method == "GET":
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT clown_id, clown_name, speciality_id FROM clown WHERE clown_id = %s;", (
+                    id,))
+            clown = cur.fetchone()
+            if clown:
+                return jsonify(clown)
+            else:
+                return {"error": True, "message": "Clown not found"}
+            
+
+@app.route("/clown/<int:id>/review", methods=["POST"])            
+def clown_review(id:int):
+
 
 
 if __name__ == "__main__":
