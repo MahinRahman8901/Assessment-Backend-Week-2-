@@ -105,18 +105,13 @@ class TestAPIClownPost:
         assert mock_execute.call_count == 1
 
 
-@patch('app.get_db_connection')
-def test_get_clown_by_id(mock_get_db_connection, test_app, fake_clown):
-    mock_cursor = mock_get_db_connection.return_value.cursor.return_value
-    mock_cursor.fetchone.return_value = {
-        "clown_id": fake_clown["clown_id"],
-        "clown_name": fake_clown["clown_name"],
-        "speciality_id": fake_clown["speciality_id"],
-        "average_rating": 3.333,  # Assuming this value is derived from somewhere
-        "num_ratings": 4
-    }
+@patch('app.conn')
+def test_get_clown_by_id(mock_conn, test_app, fake_clown):
+    mock_conn.cursor.return_value\
+        .__enter__.return_value\
+        .fetchall.return_value = [fake_clown]
 
-    response = test_app.get('/clown/17')
+    res = test_app.get("/clown/17")
 
     expected_data = {
         "clown_id": 17,
@@ -126,5 +121,20 @@ def test_get_clown_by_id(mock_get_db_connection, test_app, fake_clown):
         "average_rating": 3.333,
     }
 
-    assert response.status_code == 200
-    assert response.get_json() == expected_data
+    assert res.status_code == 200
+    assert res.get_json() == expected_data
+
+
+@patch("app.conn")
+def test_postclown_empty_review_raises_error(mock_conn, test_app):
+    """Test that checks that POSTing to /clown/[id]/review without a rating returns an error"""
+
+    mock_conn.cursor.return_value\
+        .__enter.return_value\
+        .fetchone.return_value = [{"rating": 0}]
+
+    res = test_app.post("/clown")
+
+    assert res.status_code == 400
+
+    assert "message" in res.json

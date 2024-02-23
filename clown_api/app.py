@@ -90,6 +90,7 @@ def get_clown_by_id(id: int):
                 LEFT JOIN review r on c.clown_id = r.clown_id
                 WHERE c.clown_id = %s
                 GROUP BY c.clown_id;""", (id,))
+
             clown_id = cur.fetchone()
 
             if clown_id:
