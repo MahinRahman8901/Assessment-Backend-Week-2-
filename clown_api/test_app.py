@@ -1,7 +1,9 @@
 """This file contains tests for the API."""
 
+import json
 from unittest.mock import patch
-
+from app import app
+from conftest import fake_clown, test_app
 
 class TestAPIClownGet:
     """Contains tests for the /clown GET route"""
@@ -100,3 +102,29 @@ class TestAPIClownPost:
 
         assert mock_fetch.call_count == 1
         assert mock_execute.call_count == 1
+
+
+
+def test_get_clown_by_id():
+    with patch('app.get_db_connection') as mock_get_db_connection:
+        mock_cursor = mock_get_db_connection.return_value.cursor.return_value
+        mock_cursor.fetchone.return_value = (
+            fake_clown["clown_id"],
+            fake_clown["clown_name"],
+            fake_clown["speciality_id"],
+            4.5,
+            10
+        )
+
+        response = test_app.get('/clown/17')
+
+        expected_data = {
+            "clown_id": fake_clown["clown_id"],
+            "clown_name": fake_clown["clown_name"],
+            "speciality_id": fake_clown["speciality_id"],
+            "avg_rating": 4.5,
+            "num_ratings": 10
+        }
+
+        assert response.status_code == 200
+        assert json.loads(response.data) == expected_data

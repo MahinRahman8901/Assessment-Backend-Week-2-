@@ -32,12 +32,25 @@ def get_clowns() -> Response:
 
         with conn.cursor() as cur:
             cur.execute(
-                """SELECT c.clown_id, c.clown_name, c.speciality_id, AVG(r.rating) as average_rating, COUNT(r.rating) 
+                """SELECT c.clown_id, c.clown_name, c.speciality_id, AVG(r.rating) as average_rating, COUNT(r.rating) as num_ratings 
                 FROM clown c
                 LEFT JOIN review r on c.clown_id = r.clown_id
                 GROUP BY c.clown_id
                 ORDER BY average_rating """ + order + ";")
-            return jsonify(cur.fetchall()), 200
+
+            clowns = []
+            for row in cur.fetchall():
+                clown = {
+                    "clown_id": row["clown_id"],
+                    "clown_name": row["clown_name"],
+                    "speciality_id": row["speciality_id"],
+                    "num_ratings": row["num_ratings"] if row["num_ratings"] is not None else None,
+                }
+                if row["average_rating"] is not None:
+                    clown["average_rating"] = row["average_rating"]
+                clowns.append(clown)
+
+            return jsonify(clowns), 200
     else:
         data = request.json
         try:
@@ -54,7 +67,8 @@ def get_clowns() -> Response:
                             (data["clown_name"], data["speciality_id"]))
                 new_clown = cur.fetchone()
                 conn.commit()
-            return jsonify(new_clown), 200
+            return jsonify(new_clown), 201
+
         except (KeyError, ValueError, ForeignKeyViolation) as err:
             print(err.args[0])
             conn.rollback()
@@ -65,16 +79,27 @@ def get_clowns() -> Response:
 
 @app.route("/clown/<int:id>", methods=["GET"])
 def get_clown_by_id(id: int):
+    """Returns all clown information based on the id given in the 
+    route"""
     if request.method == "GET":
         with conn.cursor() as cur:
             cur.execute(
-                """SELECT c.clown_id, c.clown_name, c.speciality_id, AVG(r.rating), COUNT(r.rating) 
+                """SELECT c.clown_id, c.clown_name, c.speciality_id, AVG(r.rating) as average_rating, COUNT(r.rating) as num_ratings 
                 FROM clown c
                 LEFT JOIN review r on c.clown_id = r.clown_id
                 WHERE c.clown_id = %s
                 GROUP BY c.clown_id;""", (id,))
-            clown = cur.fetchone()
-            if clown:
+            clown_id = cur.fetchone()
+
+            if clown_id:
+                clown = {
+                    "clown_id": clown_id["clown_id"],
+                    "clown_name": clown_id["clown_name"],
+                    "speciality_id": clown_id["speciality_id"],
+                    "num_ratings": clown_id["num_ratings"] if clown_id["num_ratings"] is not None else None,
+                }
+                if clown_id["average_rating"] is not None:
+                    clown["average_rating"] = clown_id["average_rating"]
                 return jsonify(clown), 200
             else:
                 return jsonify({"error": True, "message": "Clown not found"}), 404
@@ -82,6 +107,8 @@ def get_clown_by_id(id: int):
 
 @app.route("/clown/<int:id>/review", methods=["POST"])
 def clown_review(id: int):
+    """Posts the ratings into the clown depending on
+    the id that is given"""
     if request.method == "POST":
         data = request.json
         try:
