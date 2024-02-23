@@ -44,8 +44,9 @@ def get_clowns() -> Response:
                     "clown_id": row["clown_id"],
                     "clown_name": row["clown_name"],
                     "speciality_id": row["speciality_id"],
-                    "num_ratings": row["num_ratings"] if row["num_ratings"] is not None else None,
                 }
+                if row["num_ratings"] is not None:
+                    clown["num_ratings"] = row["num_ratings"]
                 if row["average_rating"] is not None:
                     clown["average_rating"] = row["average_rating"]
                 clowns.append(clown)
@@ -96,8 +97,9 @@ def get_clown_by_id(id: int):
                     "clown_id": clown_id["clown_id"],
                     "clown_name": clown_id["clown_name"],
                     "speciality_id": clown_id["speciality_id"],
-                    "num_ratings": clown_id["num_ratings"] if clown_id["num_ratings"] is not None else None,
                 }
+                if clown_id["num_ratings"] is not None:
+                    clown["num_ratings"] = clown_id["num_ratings"]
                 if clown_id["average_rating"] is not None:
                     clown["average_rating"] = clown_id["average_rating"]
                 return jsonify(clown), 200
