@@ -32,12 +32,12 @@ def get_clowns() -> Response:
 
         with conn.cursor() as cur:
             cur.execute(
-                """SELECT c.clown_id, c.clown_name, c.speciality_id, AVG(r.rating) as average_rating 
+                """SELECT c.clown_id, c.clown_name, c.speciality_id, AVG(r.rating) as average_rating, COUNT(r.rating) 
                 FROM clown c
                 LEFT JOIN review r on c.clown_id = r.clown_id
                 GROUP BY c.clown_id
                 ORDER BY average_rating """ + order + ";")
-            return jsonify(cur.fetchall())
+            return jsonify(cur.fetchall()), 200
     else:
         data = request.json
         try:
@@ -54,7 +54,7 @@ def get_clowns() -> Response:
                             (data["clown_name"], data["speciality_id"]))
                 new_clown = cur.fetchone()
                 conn.commit()
-            return jsonify(new_clown), 201
+            return jsonify(new_clown), 200
         except (KeyError, ValueError, ForeignKeyViolation) as err:
             print(err.args[0])
             conn.rollback()
@@ -68,15 +68,16 @@ def get_clown_by_id(id: int):
     if request.method == "GET":
         with conn.cursor() as cur:
             cur.execute(
-                """SELECT clown_id, clown_name, speciality_id
-                   FROM clown 
-                   WHERE clown_id = %s;""", (
-                    id,))
+                """SELECT c.clown_id, c.clown_name, c.speciality_id, AVG(r.rating), COUNT(r.rating) 
+                FROM clown c
+                LEFT JOIN review r on c.clown_id = r.clown_id
+                WHERE c.clown_id = %s
+                GROUP BY c.clown_id;""", (id,))
             clown = cur.fetchone()
             if clown:
-                return jsonify(clown)
+                return jsonify(clown), 200
             else:
-                return {"error": True, "message": "Clown not found"}
+                return jsonify({"error": True, "message": "Clown not found"}), 404
 
 
 @app.route("/clown/<int:id>/review", methods=["POST"])
