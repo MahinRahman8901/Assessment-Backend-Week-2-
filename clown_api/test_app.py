@@ -116,7 +116,7 @@ def test_get_clown_by_id(mock_get_db_connection, test_app, fake_clown):
         "num_ratings": 4
     }
 
-    response = test_app.get('/clown/13')
+    response = test_app.get('/clown/17')
 
     expected_data = {
         "clown_id": 17,
