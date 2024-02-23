@@ -25,9 +25,18 @@ def get_clowns() -> Response:
     """Returns a list of clowns in response to a GET request;
     Creates a new clown in response to a POST request."""
     if request.method == "GET":
+        order = request.args.get("order", "desc").lower()
+
+        if order not in ["asc", "desc"]:
+            return {"message": "Only use asc or desc"}, 400
+
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT clown_id, clown_name, speciality_id FROM clown;")
+                """SELECT c.clown_id, c.clown_name, c.speciality_id, AVG(r.rating) as average_rating 
+                FROM clown c
+                LEFT JOIN review r on c.clown_id = r.clown_id
+                GROUP BY c.clown_id
+                ORDER BY average_rating """ + order + ";")
             return jsonify(cur.fetchall())
     else:
         data = request.json
