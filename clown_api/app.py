@@ -102,6 +102,7 @@ def get_clown_by_id(id: int):
                     clown["num_ratings"] = clown_id["num_ratings"]
                 if clown_id["average_rating"] is not None:
                     clown["average_rating"] = clown_id["average_rating"]
+
                 return jsonify(clown), 200
             else:
                 return jsonify({"error": True, "message": "Clown not found"}), 404

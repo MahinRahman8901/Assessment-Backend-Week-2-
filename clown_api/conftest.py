@@ -10,7 +10,10 @@ def fake_clown():
     """Returns an example clown as a dict."""
     return {"clown_id": 17,
             "clown_name": "Bernice",
-            "speciality_id": 3}
+            "speciality_id": 3,
+            "num_ratings": 4,
+            "average_rating": 3.333,
+            }
 
 
 @pytest.fixture
