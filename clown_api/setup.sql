@@ -1,6 +1,9 @@
 -- Database creation
 
 DROP DATABASE IF EXISTS clown;
+DROP DATABASE IF EXISTS review;
+DROP DATABASE IF EXISTS speciality;
+
 CREATE DATABASE clown;
 \c clown;
 

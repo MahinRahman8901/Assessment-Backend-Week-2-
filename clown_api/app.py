@@ -125,7 +125,6 @@ def clown_review(id: int):
                     VALUES (%s, %s)
                     RETURNING *;""", (id, data["rating"])
                 )
-                clown = cur.fetchone
                 conn.commit()
             return {"message": "Successfully added"}, 200
 
