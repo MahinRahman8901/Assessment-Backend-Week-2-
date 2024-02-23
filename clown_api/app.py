@@ -59,18 +59,39 @@ def get_clown_by_id(id: int):
     if request.method == "GET":
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT clown_id, clown_name, speciality_id FROM clown WHERE clown_id = %s;", (
+                """SELECT clown_id, clown_name, speciality_id
+                   FROM clown 
+                   WHERE clown_id = %s;""", (
                     id,))
             clown = cur.fetchone()
             if clown:
                 return jsonify(clown)
             else:
                 return {"error": True, "message": "Clown not found"}
-            
 
-@app.route("/clown/<int:id>/review", methods=["POST"])            
-def clown_review(id:int):
 
+@app.route("/clown/<int:id>/review", methods=["POST"])
+def clown_review(id: int):
+    if request.method == "POST":
+        data = request.json
+        try:
+            if "rating" not in data or data["rating"] not in range(1, 6):
+                raise ValueError("Rating must be between 1-5")
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO review
+                    (clown_id, rating)
+                    VALUES (%s, %s)
+                    RETURNING *;""", (id, data["rating"])
+                )
+                clown = cur.fetchone
+                conn.commit()
+            return {"message": "Successfully added"}, 200
+
+        except ValueError as err:
+            conn.rollback()
+            return {"message": err.args[0]}, 400
 
 
 if __name__ == "__main__":
